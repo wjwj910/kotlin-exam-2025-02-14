@@ -16,6 +16,9 @@ fun main() {
 
             print("작가) ")
             val author = readlnOrNull()!!.trim()
+
+            val id = 1
+            println("${id}번 명언이 등록되었습니다.")
         }
     }
 }
