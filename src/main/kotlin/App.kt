@@ -31,8 +31,8 @@ class App {
                 } else {
                     println("번호 / 작가 / 명언")
                     println("----------------------")
-                    for (quote in wiseSayings.reversed()) {
-                        println("${quote.id} / ${quote.author} / ${quote.content}")
+                    wiseSayings.forEach {
+                        println("${it.id} / ${it.author} / ${it.content}")
                     }
                 }
 
