@@ -6,36 +6,36 @@ import java.io.PrintStream
 
 object TestRunner {
     private val originalIn: InputStream = System.`in`
-
     private val originalOut: PrintStream = System.out
 
     fun run(input: String): String {
-        // 표준 입력 리다이렉팅
-        // [키보드 입력 => 문자열 입력] 변환
-        val outputStream = ByteArrayOutputStream()
-        val printStream = PrintStream(outputStream)
+        val formattedInput = input
+            .trimIndent()
+            .plus("\n종료")
 
-        System.setIn(
-            ByteArrayInputStream(
-                ("$input\n종료")
-                    .trim()
-                    .toByteArray()
-            )
-        )
-        // 표준 출력 리다이렉팅
-        // [화면 출력 => 문자열 출력] 변환
-        System.setOut(printStream)
+        // use : close()를 자동으로 호출함
+        return ByteArrayOutputStream().use { outputStream ->
+            PrintStream(outputStream).use { printStream ->
+                try {
+                    System.setIn(
+                        ByteArrayInputStream(
+                            formattedInput.toByteArray()
+                        )
+                    )
 
-        App().run()
+                    System.setOut(printStream)
 
-        // 표준 출력 결과를 문자열로 변환
-        // 윈도우와 Mac OS 개행 문자 차이로 인한 표준화
-        val result = outputStream.toString().trim().replace(Regex("\\r\\n"), "\n")
+                    App().run()
+                } finally { // 무조건 실행되게 함(skip 될 가능성 x)
+                    System.setIn(originalIn)   // 실행이 안되면 readLine()이 안됨
+                    System.setOut(originalOut) // 실행이 안되면 println()이 안됨
+                }
+            }
 
-        // 다시 표준 입출력으로 북구
-        System.setIn(originalIn)
-        System.setOut(originalOut)
-
-        return result
+            outputStream
+                .toString()
+                .trim()
+                .replace("\r\n", "\n")
+        }
     }
 }
