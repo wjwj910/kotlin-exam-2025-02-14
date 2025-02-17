@@ -2,6 +2,7 @@ package com.domain.wiseSaying.wiseSaying.repository
 
 import com.domain.wiseSaying.wiseSaying.entity.WiseSaying
 import com.global.app.AppConfig
+import com.standard.dto.Page
 import com.standard.util.json.JsonUtil
 import java.nio.file.Path
 
@@ -34,6 +35,7 @@ class WiseSayingFileRepository : WiseSayingRepository {
             ?.filter { it.name.endsWith(".json") }
             ?.map { it.readText() }
             ?.map(WiseSaying.Companion::fromJsonStr)
+            ?.sortedByDescending { it.id }
             .orEmpty()
     }
 
@@ -90,10 +92,12 @@ class WiseSayingFileRepository : WiseSayingRepository {
 
     internal fun saveLastId(lastId: Int) {
         mkTableDirsIfNotExists()
+
         tableDirPath.resolve("lastId.txt")
             .toFile()
             .writeText(lastId.toString())
     }
+
     internal fun loadLastId(): Int {
         return try {
             tableDirPath.resolve("lastId.txt")
@@ -104,6 +108,7 @@ class WiseSayingFileRepository : WiseSayingRepository {
             0
         }
     }
+
     private fun genNextId(): Int {
         return (loadLastId() + 1).also {
             saveLastId(it)
@@ -112,10 +117,13 @@ class WiseSayingFileRepository : WiseSayingRepository {
 
     override fun findByAuthorLike(authorLike: String): List<WiseSaying> {
         val pureKeyword = authorLike.replace("%", "")
+
         val wiseSayings = findAll()
+
         if (pureKeyword.isBlank()) {
             return wiseSayings
         }
+
         return if (authorLike.startsWith("%") && authorLike.endsWith("%")) {
             wiseSayings.filter { it.author.contains(pureKeyword) }
         } else if (authorLike.startsWith("%")) {
@@ -126,12 +134,16 @@ class WiseSayingFileRepository : WiseSayingRepository {
             wiseSayings.filter { it.author == pureKeyword }
         }
     }
+
     override fun findByAuthorContent(contentLike: String): List<WiseSaying> {
         val pureKeyword = contentLike.replace("%", "")
+
         val wiseSayings = findAll()
+
         if (pureKeyword.isBlank()) {
             return wiseSayings
         }
+
         return if (contentLike.startsWith("%") && contentLike.endsWith("%")) {
             wiseSayings.filter { it.content.contains(pureKeyword) }
         } else if (contentLike.startsWith("%")) {
@@ -141,5 +153,33 @@ class WiseSayingFileRepository : WiseSayingRepository {
         } else {
             wiseSayings.filter { it.content == pureKeyword }
         }
+    }
+
+    override fun findAllPaged(itemsPerPage: Int, pageNo: Int): Page<WiseSaying> {
+        val wiseSayings = findAll()
+
+        val content = wiseSayings
+            .drop((pageNo - 1) * itemsPerPage)
+            .take(itemsPerPage)
+
+        return Page(wiseSayings.size, itemsPerPage, pageNo, "", "", content)
+    }
+
+    override fun findByKeywordPaged(
+        keywordType: String,
+        keyword: String,
+        itemsPerPage: Int,
+        pageNo: Int
+    ): Page<WiseSaying> {
+        val wiseSayings = when (keywordType) {
+            "author" -> findByAuthorContent("%$keyword%")
+            else -> findByAuthorContent("%$keyword%")
+        }
+
+        val content = wiseSayings
+            .drop((pageNo - 1) * itemsPerPage)
+            .take(itemsPerPage)
+
+        return Page(wiseSayings.size, itemsPerPage, pageNo, keywordType, keyword, content)
     }
 }
