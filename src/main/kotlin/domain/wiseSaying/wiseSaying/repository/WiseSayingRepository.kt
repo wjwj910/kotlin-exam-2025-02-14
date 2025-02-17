@@ -14,4 +14,6 @@ interface WiseSayingRepository {
     fun delete(wiseSaying: WiseSaying)
 
     fun clear()
+
+    fun build()
 }
