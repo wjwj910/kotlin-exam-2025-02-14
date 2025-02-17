@@ -1,8 +1,11 @@
+package domain.wiseSaying.wiseSaying.controller
+
+import TestRunner
 import org.junit.jupiter.api.DisplayName
 import kotlin.test.Test
 import org.assertj.core.api.Assertions.assertThat
 
-class AppTest {
+class WiseSayingControllerTest {
     @Test
     @DisplayName("명언 작성")
     fun t1() {
