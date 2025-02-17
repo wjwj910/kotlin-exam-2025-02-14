@@ -1,10 +1,10 @@
 package com.domain.wiseSaying.wiseSaying.controller
 
 import com.global.rq.Rq
-import com.domain.wiseSaying.wiseSaying.service.WiseSayingService
+import com.global.bean.SingletonScope
 
 class WiseSayingController {
-    private val wiseSayingService = WiseSayingService()
+    private val wiseSayingService by lazy { SingletonScope.wiseSayingService }
 
     fun actionWrite(rq: Rq) {
         print("명언 : ")
