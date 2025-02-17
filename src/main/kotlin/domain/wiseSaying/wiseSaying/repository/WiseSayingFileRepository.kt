@@ -8,6 +8,11 @@ class WiseSayingFileRepository : WiseSayingRepository {
     private var lastId = 0
     private val wiseSayings = mutableListOf<WiseSaying>()
 
+    val tableDirPath: Path
+        get() {
+            return AppConfig.dbDirPath.resolve("wiseSaying")
+        }
+
     override fun save(wiseSaying: WiseSaying): WiseSaying {
         if (wiseSaying.isNew()) {
             wiseSaying.id = ++lastId
@@ -15,6 +20,7 @@ class WiseSayingFileRepository : WiseSayingRepository {
         }
 
         saveOnDisk(wiseSaying)
+
         return wiseSaying
     }
 
@@ -27,7 +33,11 @@ class WiseSayingFileRepository : WiseSayingRepository {
     }
 
     override fun findById(id: Int): WiseSaying? {
-        return wiseSayings.firstOrNull { it.id == id }
+        return tableDirPath
+            .toFile()
+            .listFiles()
+            ?.find { it.name == "${id}.json" }
+            ?.let { WiseSaying.fromJsonStr(it.readText()) }
     }
 
     override fun delete(wiseSaying: WiseSaying) {
@@ -37,22 +47,22 @@ class WiseSayingFileRepository : WiseSayingRepository {
     override fun clear() {
         lastId = 0
         wiseSayings.clear()
+
         tableDirPath.toFile().deleteRecursively()
     }
 
-    val tableDirPath: Path
-        get() {
-            return AppConfig.dbDirPath.resolve("wiseSaying")
-        }
-
     private fun saveOnDisk(wiseSaying: WiseSaying) {
+        mkTableDirsIfNotExists()
+
+        val wiseSayingFile = tableDirPath.resolve("${wiseSaying.id}.json")
+        wiseSayingFile.toFile().writeText(wiseSaying.jsonStr)
+    }
+
+    private fun mkTableDirsIfNotExists() {
         tableDirPath.toFile().run {
             if (!exists()) {
                 mkdirs()
             }
         }
-
-        val wiseSayingFile = tableDirPath.resolve("${wiseSaying.id}.json")
-        wiseSayingFile.toFile().writeText(wiseSaying.json)
     }
 }
